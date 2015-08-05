@@ -1,0 +1,16 @@
+#GPU (used by most UI apps)
+
+type mei_device, dev_type;
+type msr_device, dev_type;
+
+type intel_sst_ctrl_device, dev_type;
+type gauge_device, dev_type;
+#type gauge_exec, exec_type;
+
+
+type sep_device, dev_type, mlstrustedobject;
+type i2c_device, dev_type;
+type switch_ctrl_device, dev_type;
+
+
+type nvm_ctl_socket, dev_type, mlstrustedobject;

@@ -1,0 +1,14 @@
+# to allow adb shell screencap
+allow shell gpu_device:dir search;
+allow shell graphics_device:dir search;
+allow shell surfaceflinger_tmpfs:file { read write };
+# for console in userfastboot
+userdebug_or_eng(`
+  allow shell rootfs:file execute_no_trans;
+')
+allow shell logcat_exec:file { getattr execute read open execute_no_trans };
+allow shell nvm_server_exec:file {getattr};
+allow shell netd_exec:file {getattr execute};
+allow shell log_file:file getattr;
+allow shell config_file:dir getattr;
+allow shell factory_file:dir getattr;

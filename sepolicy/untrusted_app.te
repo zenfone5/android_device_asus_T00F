@@ -1,0 +1,26 @@
+allow untrusted_app apk_data_file:dir getattr;
+allow untrusted_app property_socket:file write;
+allow untrusted_app proc_sysrq:file getattr;
+allow untrusted_app log_file:filesystem getattr;
+allow untrusted_app graphics_device:dir search;
+allow untrusted_app gpu_device:dir search;
+allow untrusted_app surfaceflinger_tmpfs:file {read write};
+allow untrusted_app logcat_exec:file rx_file_perms;
+allow untrusted_app debugfs:file { getattr };
+
+allow untrusted_app config_file:dir {search };
+allow untrusted_app config_file:file {read write open getattr };
+allow untrusted_app factory_file:dir {search };
+allow untrusted_app factory_file:file {read write open getattr };
+
+allow untrusted_app dhcp_exec:file { getattr };
+allow untrusted_app dnsmasq_exec:file { getattr };
+allow untrusted_app sensors_exec:file { getattr };
+allow untrusted_app akmd_exec:file { getattr };
+allow untrusted_app bcu_cpufreqrel_exec:file { getattr };
+allow untrusted_app customize:file { getattr };
+allow untrusted_app clatd_exec:file { getattr };
+allow untrusted_app logd_exec:file { getattr };
+allow untrusted_app crashlogd_exec:file { getattr };
+allow untrusted_app log_file:filesystem getattr;
+allow untrusted_app sysfs_hardware:file rw_file_perms;

@@ -1,0 +1,7 @@
+# Rules for intel_prop
+type intel_prop, domain;
+allow intel_prop sep_device:dir search;
+allow intel_prop sep_device:file { open getattr read };
+allow intel_prop init:unix_stream_socket connectto;
+allow intel_prop system_prop:property_service set;
+allow intel_prop property_socket:sock_file write;

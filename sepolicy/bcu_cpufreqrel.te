@@ -1,0 +1,6 @@
+# Rules for bcu_cpufreqrel
+type bcu_cpufreqrel, domain;
+
+init_daemon_domain(bcu_cpufreqrel)
+
+allow bcu_cpufreqrel sysfs_devices_system_cpu:file write;

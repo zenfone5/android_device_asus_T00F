@@ -1,0 +1,19 @@
+allow init self:capability {sys_admin sys_module};
+allow init init:process { execmem };
+allow init fuse:dir search;
+allow init fuse:dir mounton;
+allow init vfat:dir search;
+allow init app_data_file:dir { read open setattr getattr relabelfrom };
+allow init_shell kernel:system { syslog_mod };
+allow init bcu_cpufreqrel_exec:file execute_no_trans;
+domain_trans(init, rootfs, intel_prop)
+allow init unlabeled:file {execute_no_trans};
+allow init shell_data_file:dir { write add_name };
+allow init shell_data_file:file { read write open };
+allow init device:blk_file create_file_perms;
+allow init config_file:filesystem { relabelfrom relabelto mount };
+allow init factory_file:filesystem { relabelfrom relabelto mount };
+allow init log_file:filesystem { relabelfrom relabelto mount };
+allow init mmgr_exec:file execute_no_trans;
+allow init dpstmgr_exec:file execute_no_trans;
+allow init sensors_exec:file execute_no_trans;

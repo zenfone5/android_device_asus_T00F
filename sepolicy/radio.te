@@ -1,0 +1,6 @@
+# Additional radio rules
+allow radio log_file:file create_file_perms;
+allow radio log_file:dir rw_dir_perms;
+
+
+allow radio system_app_data_file:file { read getattr };

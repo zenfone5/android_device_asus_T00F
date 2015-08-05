@@ -1,0 +1,18 @@
+allow akmd { domain sysfs_thermal_management -isolated_app -untrusted_app }:dir search;
+allow akmd { domain sysfs_thermal_management -isolated_app -untrusted_app }:file { read open };
+allow akmd { domain sysfs_thermal_management -isolated_app -untrusted_app }:lnk_file read;
+
+type akmd, domain;
+init_daemon_domain(akmd);
+allow akmd shell_exec:file { read execute open execute_no_trans };
+allow akmd sensors_device:chr_file {open read write ioctl};
+allow akmd system_data_file:file { write open append };
+allow akmd system_data_file:file execute_no_trans;
+allow akmd sysfs_hwmon_control:file { open write };
+
+allow akmd i2c_device:chr_file { read write ioctl open };
+allow akmd system_data_file:dir rw_dir_perms;
+allow akmd system_data_file:file create_file_perms;
+allow akmd sysfs_gpio_value:file write;
+# sysfs file should be specified
+allow akmd sysfs:file write;
