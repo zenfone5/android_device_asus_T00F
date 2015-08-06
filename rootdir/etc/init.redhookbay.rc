@@ -5,7 +5,6 @@ import init.diag.rc
 import init.avc.rc
 import init.wireless.rc
 import init.wifi.rc
-import init.gps.rc
 import init.bt.rc
 import init.compass.rc
 import init.config_init.rc
@@ -18,13 +17,11 @@ on early-init
 #  Set boot_min_cap for boot to android
     setprop ro.boot.min.cap 0
     
-    # device ro.swconf.info
-    # setprop ro.swconf.info DSDS_A500CG
-    setprop persist.radio.multisim.config dsds
-
 on init
     chmod 0770 /system/bin/upi_ug31xx
     chown system system /system/bin/upi_ug31xx
+    insmod /lib/modules/pnwdisp.ko
+    insmod /lib/modules/pvrsgx.ko
 
     write /sys/class/graphics/fbcon/cursor_blink 0
     mkdir /data/system/ 0770 system system
@@ -43,13 +40,16 @@ on init
     # /dev/block/by-name so that we can use the same fstabs everywhere.
     symlink /dev/block/pci/pci0000:00/0000:00:01.0/by-name /dev/block/by-name
 
-    mkdir /ADF 0775 system system
-    mkdir /APD 0775 system system
+    #mkdir /ADF 0775 system system
+    #mkdir /APD 0775 system system
 
     mkdir /factory
     mkdir /config
 
 on boot
+ # 4.3 needs this
+    chmod 0644 /proc/cmdline
+
     chmod 0770 /dev/ug31xx
     chown system system /dev/ug31xx
 
@@ -124,16 +124,17 @@ setprop intel.dpst.userlevel 3
     setprop ro.rebootchargermode true
 
     #Change mmc read ahead size from 128 to 256 to reduce USB MTP read latencies
-    write /sys/block/mmcblk0/queue/read_ahead_kb 128
+    write /sys/block/mmcblk0/queue/read_ahead_kb 256
 
     #set dirty background bytes to 16MB to reduce USB MTP write latencies
     write /proc/sys/vm/dirty_background_bytes 4194304
+
 
 on post-fs-data
     # we will remap this as /mnt/sdcard with the sdcard fuse tool
     mkdir /data/media 0770 media_rw media_rw
     chown media_rw media_rw /data/media
-    setprop ro.crypto.fuse_sdcard true
+    
 
     mkdir /data/misc/firmware 0770 system system
 
@@ -149,6 +150,18 @@ on post-fs-data
     chown system log /data/logs
     chmod 0770 /data/logs
 
+# create data/gps for GPS daemon
+    mkdir /data/system/gps 771 gps system
+
+# restore permissions for gps
+    mkdir /data/system 0775 system system
+
+    restorecon_recursive /factory
+    restorecon_recursive /config
+    restorecon_recursive /logs
+
+    mkdir /data/gps 771 system system
+    chown system system /data/gps
 
 on post-fs
 #  Permissions for Thermal Management
@@ -164,14 +177,6 @@ on post-fs
 # sep driver
     chown system system /dev/sep_sec_driver
     chmod 0660 /dev/sep_sec_driver
-
-# Performance tweaks for interactive governor
-    chown system system /sys/devices/system/cpu/cpufreq/interactive/timer_rate
-    chown system system /sys/devices/system/cpu/cpufreq/interactive/go_hispeed_load
-    chown system system /sys/devices/system/cpu/cpufreq/interactive/touchboostpulse
-    chown system system /sys/devices/system/cpu/cpufreq/interactive/touchboost_freq
-    chmod 0220 /sys/devices/system/cpu/cpufreq/interactive/touchboostpulse
-    chmod 0220 /sys/devices/system/cpu/cpufreq/interactive/boostpulse
 
     # Volume keys wakeup capability
     chmod 0664 /sys/devices/platform/gpio-keys/enabled_wakeup
@@ -489,12 +494,12 @@ on post-fs
     chown system system /sys/bus/i2c/devices/5-006a/enable
 
     # For APD
-    mount ext4 /dev/block/by-name/ADF /ADF rw noatime context=u:object_r:demoapp_file:s0
+    #mount ext4 /dev/block/by-name/ADF /ADF rw noatime context=u:object_r:demoapp_file:s0
 
-    chown system system /ADF
-    chown system system /APD
-    chmod 0775 /ADF
-    chmod 0775 /APD
+    #chown system system /ADF
+    #chown system system /APD
+    #chmod 0775 /ADF
+    #chmod 0775 /APD
 
 # Permissions for LED
     chown system system /sys/class/leds/intel_keypad_led/brightness
@@ -511,16 +516,14 @@ on post-fs
 
 # Permissions for BCU Driver
     chown system system /sys/devices/platform/msic_ocd/msic_current/batt_level
-    restorecon_recursive /factory
-    restorecon_recursive /config
-    restorecon_recursive /logs
-
+    
 
 # Permissions for Touch Palm node
     chown system system /proc/asus_touch_palm_status
 
 # Permissions for Touch Proximity node
     chown system system /proc/asus_touch_proximity_status
+
 
 # Permissions for Touch Glove Mode
     chown system system /sys/devices/pci0000:00/0000:00:00.3/i2c-0/0-0020/input/input1/glove_mode
@@ -556,29 +559,9 @@ on property:persist.asus.dclick=1
 #    disabled
 #marked by chih-hsuan chang
 
-on property:ro.debuggable=1
-# Permissions for OSMonitor app
-   chmod 0666 /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq
-   chmod 0666 /sys/devices/system/cpu/cpu1/cpufreq/scaling_min_freq
-   chmod 0666 /sys/devices/system/cpu/cpu2/cpufreq/scaling_min_freq
-   chmod 0666 /sys/devices/system/cpu/cpu3/cpufreq/scaling_min_freq
-   chmod 0666 /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
-   chmod 0666 /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor
-   chmod 0666 /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor
-   chmod 0666 /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor
-   chmod 0666 /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
-   chmod 0666 /sys/devices/system/cpu/cpu1/cpufreq/scaling_max_freq
-   chmod 0666 /sys/devices/system/cpu/cpu2/cpufreq/scaling_max_freq
-   chmod 0666 /sys/devices/system/cpu/cpu3/cpufreq/scaling_max_freq
-   chmod 0666 /sys/kernel/debug/pmu_dev_stats
-   chmod 0666 /sys/devices/system/cpu/cpu1/online
-   chmod 0666 /sys/devices/system/cpu/cpu3/online
-   chmod 0666 /sys/module/intel_soc_pmu/parameters/s0ix
-
 on property:sys.boot_completed=1
-#  Permissions for Thermal Management
-    chown system system /sys/class/thermal/cooling_device2/cur_state
-    # Enable interactive governor
+    start bcu_cpufreqrel
+# Enable interactive governor
     write /sys/devices/system/cpu/cpu1/online 1
     write /sys/devices/system/cpu/cpu2/online 1
     write /sys/devices/system/cpu/cpu3/online 1
@@ -586,35 +569,14 @@ on property:sys.boot_completed=1
     write /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor interactive
     write /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor interactive
     write /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor interactive
-
-    # Performance tweaks for interactive governor
-    # This should be handled by ueventd but we need to fix its uevent generation first
-    chown system system /sys/devices/system/cpu/cpufreq/interactive/timer_rate
-    chown system system /sys/devices/system/cpu/cpufreq/interactive/go_hispeed_load
-    chown system system /sys/devices/system/cpu/cpufreq/interactive/boostpulse
-    chown system system /sys/devices/system/cpu/cpufreq/interactive/touchboostpulse
-    chown system system /sys/devices/system/cpu/cpufreq/interactive/touchboostpulse_duration
-    chown system system /sys/devices/system/cpu/cpufreq/interactive/touchboost_freq
-    chmod 0220 /sys/devices/system/cpu/cpufreq/interactive/touchboostpulse
-    chmod 0220 /sys/devices/system/cpu/cpufreq/interactive/boostpulse
-
-# ASUS Product Demo
-on property:persist.sys.enableAPD=1
-    mount ext4 /dev/block/by-name/APD /APD rw noatime context=u:object_r:demoapp_file:s0
-    chown system system /APD
-    chmod 0775 /APD
+#  Permissions for Thermal Management
+    chown system system /sys/class/thermal/cooling_device2/cur_state
 
 
 service customize /system/bin/customize_service
     class core
     user root
     oneshot
-
-on property:service.mmgr.smp=1
-   write /proc/irq/36/smp_affinity f
-
-on property:service.mmgr.smp=0
-    write /proc/irq/36/smp_affinity 1
 
 service surfaceflinger /system/bin/surfaceflinger
     class core
@@ -626,6 +588,12 @@ service drm /system/bin/drmserver
     class main
     user drm
     group drm system inet drmrpc
+
+service gpsd /system/bin/gpsd -c /system/etc/gpsconfig.xml
+    class main
+    user gps
+    group system inet radio sdcard_rw
+
 
 on charger
     start upi_ug31xx
@@ -651,3 +619,14 @@ service_redefine dpst /system/bin/dpstmgr
     class main
     user system
     group system
+
+service media /system/bin/mediaserver
+    class main
+    user media
+    group audio camera inet net_bt net_bt_admin net_bw_acct drmrpc mediadrm radio system
+    ioprio rt 4
+
+service keystore /system/bin/keystore /data/misc/keystore
+    class main
+    user keystore
+    group keystore drmrpc system

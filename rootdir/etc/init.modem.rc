@@ -51,8 +51,7 @@ on post-fs-data
     chown system radio /cache/telephony
     chmod 770 /cache/telephony
 
-on property:vold.decrypt=trigger_restart_framework
-    start mmgr_upgrade.sh
+
 
 # adding nvm manager
 service nvmmanager /system/bin/nvm_server
@@ -84,11 +83,6 @@ service ril-daemon2 /system/bin/rild -l /system/lib/librapid-ril-core.so -c 2
     user root
     group radio cache inet misc audio
     disabled
-
-service mmgr_upgrade.sh /system/bin/sh /system/vendor/firmware/telephony/mmgr_upgrade.sh
-    class main
-    user root
-    oneshot
 
 
 on property:persist.radio.multisim.config=dsds

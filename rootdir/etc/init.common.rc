@@ -1,7 +1,5 @@
 import /init.watchdog.rc
 import /init.firmware.rc
-import /init.intel.feature.asf.rc
-import /init.intel.features.rc
 import /init.zram.rc
 
 on early-init
@@ -16,26 +14,30 @@ on early-init
     mount debugfs none /sys/kernel/debug mode=0755
 
 on init
-    # set usb serial number
-    write /sys/class/android_usb/android0/iSerial ${ro.serialno}
-
+    
+    mkdir /mnt/shell/emulated 0700 shell shell
     mkdir /storage/emulated 0555 root root
 
-    mkdir /mnt/shell/emulated 0700 shell shell
+    mkdir /mnt/media_rw/sdcard1 0700 media_rw media_rw
+    mkdir /storage/sdcard1  0700 root root
 
-    mkdir /mnt/media_rw/MicroSD  0700 media_rw media_rw
+    mkdir /mnt/media_rw/sdcard1  0700 media_rw media_rw
     mkdir /mnt/media_rw/USBdisk1 0700 media_rw media_rw
     mkdir /mnt/media_rw/USBdisk2 0700 media_rw media_rw
     mkdir /mnt/media_rw/USBdisk3 0700 media_rw media_rw
     mkdir /mnt/media_rw/USBdisk4 0700 media_rw media_rw
     mkdir /mnt/media_rw/USBdisk5 0700 media_rw media_rw
+    mkdir /storage/USBdisk1 0700 root root
+    mkdir /storage/USBdisk2 0700 root root
+    mkdir /storage/USBdisk3 0700 root root
+    mkdir /storage/USBdisk4 0700 root root
+    mkdir /storage/USBdisk5 0700 root root
 
     export EXTERNAL_STORAGE /storage/emulated/legacy
     export EMULATED_STORAGE_SOURCE /mnt/shell/emulated
     export EMULATED_STORAGE_TARGET /storage/emulated
-    # Disable SECONDARY_STORAGE in common
-    # Shall enable it in product
-    export SECONDARY_STORAGE /storage/MicroSD
+    export SECONDARY_STORAGE /storage/sdcard1:/storage/USBdisk1
+
 
     # Support legacy paths
     symlink /storage/emulated/legacy /sdcard
@@ -43,24 +45,23 @@ on init
     symlink /storage/emulated/legacy /storage/sdcard0
     symlink /mnt/shell/emulated/0 /storage/emulated/legacy
 
-    # Support external SD card
-    mkdir /storage/MicroSD  0700 root root
+    # for backwards compatibility
+    symlink /storage/emulated/legacy /sdcard
+    symlink /storage/emulated/legacy /mnt/sdcard
+    symlink /storage/emulated/legacy /storage/sdcard0
+    symlink /mnt/shell/emulated/0 /storage/emulated/legacy
+    symlink /storage/sdcard1 /mnt/extSdCard
+    symlink /storage/sdcard1 /external_sd
+    symlink /storage/USBdisk1 /mnt/USBdisk1
+    symlink /storage/USBdisk2 /mnt/USBdisk2
+    symlink /storage/USBdisk3 /mnt/USBdisk3
+    symlink /storage/USBdisk3 /mnt/USBdisk3
+    symlink /storage/USBdisk4 /mnt/USBdisk4
+    symlink /storage/USBdisk4 /mnt/USBdisk4
+    symlink /storage/USBdisk5 /mnt/USBdisk5
+    symlink /storage/USBdisk5 /mnt/USBdisk5
 
-    # Support USB Disk
-    mkdir /storage/USBdisk1 0700 root root
-    mkdir /storage/USBdisk2 0700 root root
-    mkdir /storage/USBdisk3 0700 root root
-    mkdir /storage/USBdisk4 0700 root root
-    mkdir /storage/USBdisk5 0700 root root
 
-    #symlink for ASUS APP
-    mkdir   /Removable 0751 root sdcard_r
-    symlink /storage/MicroSD  /Removable/MicroSD
-    symlink /storage/USBdisk1 /Removable/USBdisk1
-    symlink /storage/USBdisk2 /Removable/USBdisk2
-    symlink /storage/USBdisk3 /Removable/USBdisk3
-    symlink /storage/USBdisk4 /Removable/USBdisk4
-    symlink /storage/USBdisk5 /Removable/USBdisk5
 
 on boot
 #    chown system system /dev/pvr_sync
@@ -100,8 +101,6 @@ on boot
 on fs
     mkdir /factory 0775 system system
     mkdir /config 0775 system system
-    mkdir /media 0775 media media
-    mount_all /fstab
     chown root system /factory
     chmod 0770 /factory
     mkdir /config/wifi
@@ -112,17 +111,20 @@ on fs
     chmod 0770 /config/em
     chown system system /sys/class/usb_otg/otg0/a_bus_drop
 
+    mount_all /fstab.redhookbay
+    setprop ro.crypto.fuse_sdcard true
+
 
     #UPI gauge daemon
-    #asus_exec /system/bin/touch /config/upi_gg
-    #chown system system /config/upi_gg
-    #chmod 0660 /config/upi_gg
-    #asus_exec /system/bin/touch /config/upi_bo
-    #chown system system /config/upi_bo
-    #chmod 0660 /config/upi_bo
-    #asus_exec /system/bin/touch /config/upi_bo_auto
-    #chown system system /config/upi_bo_auto
-    #chmod 0660 /config/upi_bo_auto
+    asus_exec /system/bin/touch /config/upi_gg
+    chown system system /config/upi_gg
+    chmod 0660 /config/upi_gg
+    asus_exec /system/bin/touch /config/upi_bo
+    chown system system /config/upi_bo
+    chmod 0660 /config/upi_bo
+    asus_exec /system/bin/touch /config/upi_bo_auto
+    chown system system /config/upi_bo_auto
+    chmod 0660 /config/upi_bo_auto
 
 on post-fs
 # create virtual SD card at /mnt/sdcard, based on the /data/media directory
@@ -142,7 +144,7 @@ on post-fs
 service sdcard /system/bin/sdcard -u 1023 -g 1023 -l /data/media /mnt/shell/emulated
     class late_start
 
-service fuse_MicroSD /system/bin/sdcard -u 1023 -g 1023 -w 1023 -d /mnt/media_rw/MicroSD /storage/MicroSD
+service fuse_sdcard1 /system/bin/sdcard -u 1023 -g 1023 -w 1023 -d /mnt/media_rw/sdcard1 /storage/sdcard1
     class late_start
     disabled
 
@@ -165,9 +167,6 @@ service fuse_USBdisk4 /system/bin/sdcard -u 1023 -g 1023 -w 1023 -d /mnt/media_r
 service fuse_USBdisk5 /system/bin/sdcard -u 1023 -g 1023 -w 1023 -d /mnt/media_rw/USBdisk5 /storage/USBdisk5
     class late_start
     disabled
-
-
-
 
 
 on post-fs-data
@@ -219,9 +218,6 @@ on post-fs-data
     chown root log /data/dontpanic/emmc_ipanic_gbuffer
     chmod 0640 /data/dontpanic/emmc_ipanic_gbuffer
 
-on property:sys.boot_completed=1
-    start bcu_cpufreqrel
-
 on charger
     #set properties in COS
     start intel_prop
@@ -235,21 +231,18 @@ on charger
     chown system system /dev/card0
 
     insmod /lib/modules/imx111.ko
-    insmod /lib/modules/imx219.ko
     insmod /lib/modules/t4k35.ko
     insmod /lib/modules/t4k35_180.ko
     
     insmod /lib/modules/t4k37.ko
     insmod /lib/modules/mn34130.ko  
     
-    insmod /lib/modules/hm2056.ko
-    insmod /lib/modules/gc2155.ko
     
-    insmod /lib/modules/rt8515.ko
     insmod /lib/modules/atomisp-css2300.ko
 
 
     start pvrsrvctl
+    
     # reduce backlight
     write /sys/class/backlight/psb-bl/brightness 50
     #default setting to enable charging in COS
@@ -284,13 +277,6 @@ service charger_app /charger
     class charger
     user root
 
-service logbackup /system/bin/sh /system/etc/packlogs.sh
-    class late_start
-    user root
-    group sdcard_rw
-    oneshot
-    disabled
-    seclabel u:r:logbackup:s0
 
 # Enable native bridge for target executables
 on property:ro.enable.native.bridge.exec=1

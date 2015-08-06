@@ -1,6 +1,7 @@
 # REDHOOKBAY specific rules for recovery os
 on early-init
-    
+    insmod /lib/modules/pnwdisp.ko
+    insmod /lib/modules/pvrsgx.ko
     chmod 0600 /dev/dri/controlD64
     start thermald
     
